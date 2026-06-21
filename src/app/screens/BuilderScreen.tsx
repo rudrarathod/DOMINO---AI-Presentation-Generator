@@ -258,7 +258,7 @@ export default function BuilderScreen() {
   const handleAiError = (err: any, actionName: string) => {
     console.error(`${actionName} failed:`, err);
     const msg = err?.message || "";
-    
+
     if (msg.includes("Free generation limit") || msg.includes("limit (5)") || msg.includes("credits")) {
       toast.error("You have run out of free generation credits. Please add your own API Key to continue.");
       setApiKeyModalOpen(true);
@@ -266,9 +266,9 @@ export default function BuilderScreen() {
       toast.error("An API Key is required. Please set it in the Settings panel.");
       setApiKeyModalOpen(true);
     } else if (
-      msg.toLowerCase().includes("invalid api key") || 
-      msg.toLowerCase().includes("api_key_invalid") || 
-      msg.toLowerCase().includes("unauthorized") || 
+      msg.toLowerCase().includes("invalid api key") ||
+      msg.toLowerCase().includes("api_key_invalid") ||
+      msg.toLowerCase().includes("unauthorized") ||
       msg.includes("401")
     ) {
       toast.error("Invalid Groq API key. Please configure a valid key in Settings.");
@@ -358,10 +358,10 @@ export default function BuilderScreen() {
     };
 
     generateDeck();
-    
+
     // Clear router history state so reloading doesn't re-trigger generation
     window.history.replaceState({}, document.title);
-    
+
     return () => {
       isMounted = false;
     };
@@ -463,27 +463,27 @@ export default function BuilderScreen() {
 
     try {
       const response = await refineSlides(newMessages, slides, selectedSlide, editScope);
-      
+
       // Deduct 1 credit for chat refinement if using system key
       if (!hasCustomApiKey()) {
         await deductCredits(1);
       }
-      
+
       // Apply modifications
       if (response.modifications && response.modifications.length > 0) {
         let updatedSlides = [...slides];
         let activeMods = response.modifications.filter(m => m.action !== "none");
-        
+
         if (editScope === "slide") {
           // Programmatically restrict modifications to the active slide only
           activeMods = activeMods
             .filter(mod => mod.action === "modify")
             .map(mod => ({ ...mod, slideIndex: selectedSlide }));
         }
-        
+
         for (const mod of activeMods) {
           const idx = mod.slideIndex !== undefined ? mod.slideIndex : selectedSlide;
-          
+
           if (mod.action === "modify" && mod.slide) {
             if (idx >= 0 && idx < updatedSlides.length) {
               const existing = updatedSlides[idx];
@@ -554,12 +554,12 @@ export default function BuilderScreen() {
               <Sparkles size={28} className="text-white animate-spin [animation-duration:3s]" />
             </div>
           </div>
-          
+
           <h3 className="text-lg font-semibold text-foreground tracking-tight mb-2">Generating Presentation</h3>
           <p className="text-sm text-muted-foreground animate-pulse text-center max-w-sm px-6 leading-relaxed">
             {progressMsg}
           </p>
-          
+
           <div className="w-48 h-1 bg-muted rounded-full overflow-hidden mt-6 relative">
             <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full animate-pulse w-full" />
           </div>
@@ -595,7 +595,7 @@ export default function BuilderScreen() {
             >
               <Redo size={14} />
             </button>
-            
+
             <div className="relative">
               <button
                 onClick={() => setHistoryDropdownOpen(!historyDropdownOpen)}
@@ -604,7 +604,7 @@ export default function BuilderScreen() {
               >
                 <Clock size={14} />
               </button>
-              
+
               {historyDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setHistoryDropdownOpen(false)} />
@@ -666,14 +666,14 @@ export default function BuilderScreen() {
             <Play size={13} />
             Preview
           </button>
-          <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all text-sm">
+          {/* <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all text-sm">
             <Share2 size={13} />
             Share
           </button>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-sm font-medium transition-all shadow-lg shadow-violet-500/20">
             <Download size={13} />
             <span className="hidden sm:inline">Export</span>
-          </button>
+          </button> */}
           <div className="w-px h-5 bg-border shrink-0 hidden lg:block" />
           <button
             onClick={() => setRightOpen((o) => !o)}
@@ -867,7 +867,7 @@ export default function BuilderScreen() {
                     <span>{editScope === 'slide' ? 'Active Slide' : 'Whole Deck'}</span>
                     <ChevronDown size={11} className={`transition-transform duration-200 ${scopeDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
-                  
+
                   {scopeDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-30" onClick={() => setScopeDropdownOpen(false)} />
@@ -978,7 +978,7 @@ export default function BuilderScreen() {
                           </span>
                           <ChevronDown size={11} className={`transition-transform duration-200 ${modelDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
-                        
+
                         {modelDropdownOpen && (
                           <>
                             <div className="fixed inset-0 z-30" onClick={() => setModelDropdownOpen(false)} />
@@ -991,9 +991,8 @@ export default function BuilderScreen() {
                                     localStorage.setItem("lumina_model", m.id);
                                     setModelDropdownOpen(false);
                                   }}
-                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] text-left transition-colors ${
-                                    model === m.id ? "text-violet-300 bg-violet-500/10 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                  }`}
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] text-left transition-colors ${model === m.id ? "text-violet-300 bg-violet-500/10 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                    }`}
                                 >
                                   <div className="flex flex-col min-w-0">
                                     <span className="truncate">{m.name}</span>
