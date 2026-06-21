@@ -136,7 +136,50 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
         {/* Authentication Button Area */}
         <div className="w-full flex flex-col items-center gap-4">
-          {isRealGoogleMode ? (
+          {showDemoForm ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full flex flex-col gap-3 text-left animate-fade-in"
+            >
+              <div>
+                <label className="text-[10px] font-mono uppercase tracking-widest text-[#94A3B8] mb-1.5 block">Full Name</label>
+                <input
+                  type="text"
+                  value={demoName}
+                  onChange={(e) => setDemoName(e.target.value)}
+                  placeholder="e.g. Alex Kim"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#22D3EE]/50 transition-colors font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase tracking-widest text-[#94A3B8] mb-1.5 block">Email Address</label>
+                <input
+                  type="email"
+                  value={demoEmail}
+                  onChange={(e) => setDemoEmail(e.target.value)}
+                  placeholder="e.g. alex@domino.app"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#22D3EE]/50 transition-colors font-medium"
+                />
+              </div>
+
+              <button
+                onClick={handleDemoSignIn}
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] hover:from-[#7c50e3] hover:to-[#1ec0d8] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-md shadow-[#8B5CF6]/15 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                Enter Application
+                <ArrowRight size={13} />
+              </button>
+
+              <button
+                onClick={() => setShowDemoForm(false)}
+                className="w-full text-center text-xs text-[#94A3B8] hover:text-white transition-colors mt-2"
+              >
+                Go Back
+              </button>
+            </motion.div>
+          ) : isRealGoogleMode ? (
             <div className="w-full flex flex-col items-center gap-4">
               {/* Google Button mounting point */}
               <div id="google-signin-button" className="min-h-[40px] flex items-center justify-center" />
@@ -153,74 +196,27 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               </button>
             </div>
           ) : (
-            <div className="w-full flex flex-col gap-3">
-              {showDemoForm ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full flex flex-col gap-3 text-left animate-fade-in"
-                >
-                  <div>
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[#94A3B8] mb-1.5 block">Full Name</label>
-                    <input
-                      type="text"
-                      value={demoName}
-                      onChange={(e) => setDemoName(e.target.value)}
-                      placeholder="e.g. Alex Kim"
-                      className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#22D3EE]/50 transition-colors font-medium"
-                    />
-                  </div>
+            <div className="w-full flex flex-col gap-4">
+              {/* Google OAuth Button Trigger (Fallback Demo Mode) */}
+              <button
+                onClick={() => setShowDemoForm(true)}
+                className="w-full py-3 rounded-xl bg-white text-[#0B0F19] hover:bg-slate-100 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-md shadow-white/5 active:scale-[0.98]"
+              >
+                <Chrome size={14} className="text-[#8B5CF6] shrink-0" />
+                Sign in with Google
+              </button>
 
-                  <div>
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[#94A3B8] mb-1.5 block">Email Address</label>
-                    <input
-                      type="email"
-                      value={demoEmail}
-                      onChange={(e) => setDemoEmail(e.target.value)}
-                      placeholder="e.g. alex@domino.app"
-                      className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#22D3EE]/50 transition-colors font-medium"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleDemoSignIn}
-                    className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#22D3EE] hover:from-[#7c50e3] hover:to-[#1ec0d8] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-md shadow-[#8B5CF6]/15 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
-                    Enter Application
-                    <ArrowRight size={13} />
-                  </button>
-
-                  <button
-                    onClick={() => setShowDemoForm(false)}
-                    className="w-full text-center text-xs text-[#94A3B8] hover:text-white transition-colors mt-2"
-                  >
-                    Go Back
-                  </button>
-                </motion.div>
-              ) : (
-                <div className="w-full flex flex-col gap-4">
-                  {/* Google OAuth Button Trigger (Fallback Demo Mode) */}
-                  <button
-                    onClick={() => setShowDemoForm(true)}
-                    className="w-full py-3 rounded-xl bg-white text-[#0B0F19] hover:bg-slate-100 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-md shadow-white/5 active:scale-[0.98]"
-                  >
-                    <Chrome size={14} className="text-[#8B5CF6] shrink-0" />
-                    Sign in with Google
-                  </button>
-
-                  {/* Settings / Config Banner */}
-                  <div className="rounded-2xl border border-amber-500/10 bg-amber-500/5 p-4 text-[11px] text-amber-400 leading-relaxed text-left">
-                    <p className="font-semibold mb-1 flex items-center gap-1.5">
-                      <Terminal size={12} />
-                      Configuring Google Client ID:
-                    </p>
-                    <p className="mt-1">Add your Client ID to the <span className="font-mono bg-white/5 px-1 py-0.5 rounded text-[10px]">.env</span> file to swap to real Google OAuth:</p>
-                    <p className="font-mono text-[9px] mt-2 select-all break-all bg-black/40 p-2.5 rounded border border-white/[0.06] text-amber-300">
-                      VITE_GOOGLE_CLIENT_ID={googleId || "your-client-id"}
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* Settings / Config Banner */}
+              <div className="rounded-2xl border border-amber-500/10 bg-amber-500/5 p-4 text-[11px] text-amber-400 leading-relaxed text-left">
+                <p className="font-semibold mb-1 flex items-center gap-1.5">
+                  <Terminal size={12} />
+                  Configuring Google Client ID:
+                </p>
+                <p className="mt-1">Add your Client ID to the <span className="font-mono bg-white/5 px-1 py-0.5 rounded text-[10px]">.env</span> file to swap to real Google OAuth:</p>
+                <p className="font-mono text-[9px] mt-2 select-all break-all bg-black/40 p-2.5 rounded border border-white/[0.06] text-amber-300">
+                  VITE_GOOGLE_CLIENT_ID={googleId || "your-client-id"}
+                </p>
+              </div>
             </div>
           )}
         </div>
