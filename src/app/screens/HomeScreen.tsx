@@ -735,27 +735,82 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
                   {/* Model selector */}
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2.5">Model</p>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
                       {[
-                        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", desc: "Best quality · Recommended" },
-                        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", desc: "Ultra fast · Low latency" },
-                        { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B", desc: "Long context · 32K tokens" },
-                        { id: "gemma2-9b-it", name: "Gemma 2 9B", desc: "Efficient · Google DeepMind" },
+                        { 
+                          id: "llama-3.3-70b-versatile", 
+                          name: "Llama 3.3 70B", 
+                          speed: "280 T/s", 
+                          cost: "High", 
+                          costColor: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+                          limit: "300K TPM · 1K RPM", 
+                          desc: "Best quality, rich layout reasoning & formatting." 
+                        },
+                        { 
+                          id: "meta-llama/llama-4-scout-17b-16e-instruct", 
+                          name: "Llama 4 Scout 17B (Preview)", 
+                          speed: "750 T/s", 
+                          cost: "Low-Mid", 
+                          costColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+                          limit: "300K TPM · 1K RPM", 
+                          desc: "Next-gen preview model, blazingly fast." 
+                        },
+                        { 
+                          id: "openai/gpt-oss-120b", 
+                          name: "GPT-OSS 120B", 
+                          speed: "500 T/s", 
+                          cost: "High", 
+                          costColor: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+                          limit: "250K TPM · 1K RPM", 
+                          desc: "Flagship open-weight model with high reasoning capacity." 
+                        },
+                        { 
+                          id: "qwen/qwen3-32b", 
+                          name: "Qwen 3 32B (Preview)", 
+                          speed: "400 T/s", 
+                          cost: "Medium", 
+                          costColor: "text-violet-400 bg-violet-500/10 border-violet-500/20",
+                          limit: "300K TPM · 1K RPM", 
+                          desc: "Alibaba Cloud's highly capable multilingual model." 
+                        },
+                        { 
+                          id: "llama-3.1-8b-instant", 
+                          name: "Llama 3.1 8B", 
+                          speed: "560 T/s", 
+                          cost: "Low", 
+                          costColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                          limit: "250K TPM · 1K RPM", 
+                          desc: "Ultra fast, lightweight, and highly cost-efficient." 
+                        },
                       ].map((m) => (
                         <button
                           key={m.id}
                           onClick={() => setModel(m.id)}
-                          className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border text-left transition-all ${model === m.id
+                          className={`w-full flex items-start gap-3 px-3.5 py-3 rounded-xl border text-left transition-all ${
+                            model === m.id
                               ? "border-violet-500/40 bg-violet-500/8"
                               : "border-border hover:bg-muted/30"
-                            }`}
+                          }`}
                         >
-                          <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${model === m.id ? "border-violet-500 bg-violet-500" : "border-muted-foreground/40"}`}>
+                          <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center mt-0.5 ${
+                            model === m.id ? "border-violet-500 bg-violet-500" : "border-muted-foreground/40"
+                          }`}>
                             {model === m.id && <div className="w-1 h-1 rounded-full bg-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">{m.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{m.desc}</p>
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
+                                  {m.speed}
+                                </span>
+                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${m.costColor}`}>
+                                  {m.cost}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed mb-1">{m.desc}</p>
+                            <p className="text-[9px] font-mono text-muted-foreground/60">Limits: {m.limit}</p>
                           </div>
                         </button>
                       ))}
