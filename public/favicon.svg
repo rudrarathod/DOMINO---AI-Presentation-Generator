@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="domino-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with Violet/Indigo Gradient -->
+  <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#domino-grad)"/>
+  <!-- Minimal Domino Divider Line -->
+  <line x1="16" y1="6" x2="16" y2="26" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.3" stroke-dasharray="2 2"/>
+  <!-- Domino Dots -->
+  <!-- Left half: 1 dot -->
+  <circle cx="9" cy="16" r="2" fill="#ffffff"/>
+  <!-- Right half: 2 dots -->
+  <circle cx="23" cy="9" r="2" fill="#ffffff"/>
+  <circle cx="23" cy="23" r="2" fill="#ffffff"/>
+</svg>

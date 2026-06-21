@@ -201,9 +201,19 @@ export default function HomeScreen() {
         {/* Logo */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
-              <Sparkles size={15} className="text-white" />
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 shadow-lg shadow-violet-500/25 shrink-0">
+              <defs>
+                <linearGradient id="logo-grad-home" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6"/>
+                  <stop offset="100%" stopColor="#4F46E5"/>
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#logo-grad-home)"/>
+              <line x1="16" y1="6" x2="16" y2="26" stroke="#ffffff" strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="2 2"/>
+              <circle cx="9" cy="16" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="9" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="23" r="2" fill="#ffffff"/>
+            </svg>
             <span className="text-base font-semibold tracking-tight text-foreground">DOMINO</span>
           </div>
           <button
@@ -328,6 +338,27 @@ export default function HomeScreen() {
               </div>
             );
           })()}
+        </div>
+
+        {/* Submission Profile Widget */}
+        <div className="px-3 py-3 border-t border-border bg-[#0a0a0c]/60 flex flex-col gap-2 shrink-0 select-none">
+          <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-2.5 flex flex-col gap-1">
+            <span className="text-[8px] font-bold text-violet-400 uppercase tracking-widest">
+              Submission Profile
+            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-foreground">Rudra Rathod</span>
+              <span className="text-[10px] text-muted-foreground truncate">rudrarathod738@gmail.com</span>
+            </div>
+          </div>
+          <a
+            href="https://digitalheroesco.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center py-2 px-3 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-bold tracking-wider transition-all uppercase hover:scale-[1.01] text-center shadow-md shadow-violet-500/10 hover:shadow-violet-500/20"
+          >
+            Built for Digital Heroes
+          </a>
         </div>
 
         {/* User profile */}

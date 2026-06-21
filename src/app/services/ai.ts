@@ -186,6 +186,13 @@ You have the power to:
 - Delete a slide
 - Respond with general feedback
 
+You DO NOT have the power to:
+- Change the overall presentation layout aspect ratio (e.g. 16:9, 4:3, 1:1). This is controlled solely by the user via the UI controls.
+- Modify the raw CSS/HTML code structure, fonts, or base layouts of the slide templates.
+- Export the presentation or modify file format output options.
+
+If the user asks for these unsupported modifications (such as changing the aspect ratio, modifying global layout code, or exporting files), DO NOT add any action items to the 'modifications' list. Instead, respond with action "none", explain in the 'explanation' that you cannot change presentation aspect ratio or layout templates, and guide them to use the built-in UI controls (like the slide count or aspect ratio selector in the header).
+
 Here is the current slide deck JSON:
 ${currentDeckJSON}
 

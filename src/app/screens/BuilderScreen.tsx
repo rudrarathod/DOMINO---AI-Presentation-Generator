@@ -550,9 +550,19 @@ export default function BuilderScreen() {
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#07070a]/90 backdrop-blur-md">
           <div className="relative mb-6">
             <div className="absolute inset-0 -m-8 bg-violet-600/30 rounded-full blur-xl animate-pulse" />
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-2xl relative border border-violet-400/30 animate-bounce">
-              <Sparkles size={28} className="text-white animate-spin [animation-duration:3s]" />
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-16 h-16 shadow-2xl relative animate-bounce shrink-0">
+              <defs>
+                <linearGradient id="logo-grad-loading" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6"/>
+                  <stop offset="100%" stopColor="#4F46E5"/>
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#logo-grad-loading)"/>
+              <line x1="16" y1="6" x2="16" y2="26" stroke="#ffffff" strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="2 2"/>
+              <circle cx="9" cy="16" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="9" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="23" r="2" fill="#ffffff"/>
+            </svg>
           </div>
 
           <h3 className="text-lg font-semibold text-foreground tracking-tight mb-2">Generating Presentation</h3>
@@ -642,9 +652,19 @@ export default function BuilderScreen() {
           </button>
           <div className="w-px h-5 bg-border shrink-0 hidden md:block" />
           <div className="flex items-center gap-2 min-w-0 flex-1 max-w-[200px] sm:max-w-xs md:max-w-md">
-            <div className="w-5 h-5 rounded bg-gradient-to-br from-violet-500 to-indigo-600 shrink-0 flex items-center justify-center">
-              <Layers size={11} className="text-white" />
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-5 h-5 shrink-0">
+              <defs>
+                <linearGradient id="logo-grad-builder" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6"/>
+                  <stop offset="100%" stopColor="#4F46E5"/>
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#logo-grad-builder)"/>
+              <line x1="16" y1="6" x2="16" y2="26" stroke="#ffffff" strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="2 2"/>
+              <circle cx="9" cy="16" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="9" r="2" fill="#ffffff"/>
+              <circle cx="23" cy="23" r="2" fill="#ffffff"/>
+            </svg>
             <input
               type="text"
               value={deckTitle}
@@ -747,7 +767,7 @@ export default function BuilderScreen() {
               </div>
 
               {/* Add slide */}
-              <div className="px-3 py-3 border-t border-border">
+              <div className="px-3 py-3 border-t border-border flex flex-col gap-2 shrink-0">
                 <button
                   onClick={() => {
                     const newSlideObj: Slide = {
@@ -772,6 +792,27 @@ export default function BuilderScreen() {
                   <Plus size={14} />
                   Add Slide
                 </button>
+
+                {/* Submission Profile Widget */}
+                <div className="p-2.5 rounded-xl border border-white/[0.04] bg-white/[0.01] flex flex-col gap-2 select-none">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[8px] font-bold text-violet-400 uppercase tracking-widest">
+                      Submission Profile
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-foreground">Rudra Rathod</span>
+                      <span className="text-[10px] text-muted-foreground truncate">rudrarathod738@gmail.com</span>
+                    </div>
+                  </div>
+                  <a
+                    href="https://digitalheroesco.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center py-2 px-3 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-bold tracking-wider transition-all uppercase hover:scale-[1.01] text-center shadow-md shadow-violet-500/10 hover:shadow-violet-500/20"
+                  >
+                    Built for Digital Heroes
+                  </a>
+                </div>
               </div>
             </motion.aside>
           )}
