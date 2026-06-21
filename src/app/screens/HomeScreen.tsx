@@ -86,6 +86,14 @@ const suggestions = [
   { label: "Product Launch", icon: Zap },
 ];
 
+const mList = [
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", speed: "280 T/s", cost: "High" },
+  { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout", speed: "750 T/s", cost: "Low-Mid" },
+  { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B", speed: "500 T/s", cost: "High" },
+  { id: "qwen/qwen3-32b", name: "Qwen 3 32B", speed: "400 T/s", cost: "Medium" },
+  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", speed: "560 T/s", cost: "Low" },
+];
+
 const containerVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08 } },
@@ -138,6 +146,8 @@ export default function HomeScreen() {
   const [slidePickerOpen, setSlidePickerOpen] = useState(false);
   const [ratioPickerOpen, setRatioPickerOpen] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [model, setModel] = useState(() => localStorage.getItem("lumina_model") || "llama-3.3-70b-versatile");
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerate = (customPrompt?: string) => {
@@ -437,7 +447,7 @@ export default function HomeScreen() {
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => { setSlidePickerOpen((o) => !o); setRatioPickerOpen(false); }}
+                      onClick={() => { setSlidePickerOpen((o) => !o); setRatioPickerOpen(false); setModelPickerOpen(false); }}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-all ${slidePickerOpen ? "bg-violet-500/10 border-violet-500/40 text-violet-300" : "bg-muted/60 border-border text-muted-foreground hover:text-foreground"
                         }`}
                     >
@@ -474,7 +484,7 @@ export default function HomeScreen() {
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => { setRatioPickerOpen((o) => !o); setSlidePickerOpen(false); }}
+                      onClick={() => { setRatioPickerOpen((o) => !o); setSlidePickerOpen(false); setModelPickerOpen(false); }}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-all ${ratioPickerOpen ? "bg-violet-500/10 border-violet-500/40 text-violet-300" : "bg-muted/60 border-border text-muted-foreground hover:text-foreground"
                         }`}
                     >
@@ -504,6 +514,50 @@ export default function HomeScreen() {
                             >
                               <span>{label}</span>
                               {aspectRatio === value && <Check size={11} className="text-violet-400" />}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Model selector dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setModelPickerOpen((o) => !o); setSlidePickerOpen(false); setRatioPickerOpen(false); }}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs transition-all ${modelPickerOpen ? "bg-violet-500/10 border-violet-500/40 text-violet-300" : "bg-muted/60 border-border text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      <Cpu size={11} />
+                      <span>{mList.find(m => m.id === model)?.name || "Llama 3.3 70B"}</span>
+                      <ChevronDown size={10} className={`transition-transform duration-200 ${modelPickerOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    <AnimatePresence>
+                      {modelPickerOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                          transition={{ duration: 0.14 }}
+                          className="absolute bottom-full left-0 mb-2 w-52 rounded-xl border border-border bg-[#1a1a1d] shadow-xl shadow-black/60 overflow-hidden z-20"
+                        >
+                          {mList.map((m) => (
+                            <button
+                              key={m.id}
+                              onClick={() => {
+                                setModel(m.id);
+                                localStorage.setItem("lumina_model", m.id);
+                                setModelPickerOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors ${model === m.id ? "text-violet-300 bg-violet-500/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                }`}
+                            >
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold truncate">{m.name}</span>
+                                <span className="text-[9px] text-muted-foreground/85 font-mono mt-0.5">{m.speed} · {m.cost} Cost</span>
+                              </div>
+                              {model === m.id && <Check size={11} className="text-violet-400 shrink-0" />}
                             </button>
                           ))}
                         </motion.div>
@@ -551,7 +605,7 @@ export default function HomeScreen() {
 
       {/* Settings modal */}
       <AnimatePresence>
-        {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+        {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} model={model} setModel={setModel} />}
       </AnimatePresence>
 
       {/* API Key Limit Modal */}
@@ -568,16 +622,17 @@ export default function HomeScreen() {
 
 type SettingsTab = "account" | "ai";
 
-function SettingsModal({ onClose }: { onClose: () => void }) {
+function SettingsModal({ onClose, model, setModel }: { onClose: () => void; model: string; setModel: (m: string) => void }) {
   const [tab, setTab] = useState<SettingsTab>("account");
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("lumina_api_key") || "");
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
-  const [model, setModel] = useState(() => localStorage.getItem("lumina_model") || "llama-3.3-70b-versatile");
+  const [tempModel, setTempModel] = useState(model);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
     saveCustomApiKey(apiKey).catch(e => console.error("Failed to sync API key:", e));
-    localStorage.setItem("lumina_model", model);
+    localStorage.setItem("lumina_model", tempModel);
+    setModel(tempModel);
     setSaved(true);
     toast.success("Settings saved!");
     setTimeout(() => {
@@ -785,17 +840,17 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
                       ].map((m) => (
                         <button
                           key={m.id}
-                          onClick={() => setModel(m.id)}
+                          onClick={() => setTempModel(m.id)}
                           className={`w-full flex items-start gap-3 px-3.5 py-3 rounded-xl border text-left transition-all ${
-                            model === m.id
+                            tempModel === m.id
                               ? "border-violet-500/40 bg-violet-500/8"
                               : "border-border hover:bg-muted/30"
                           }`}
                         >
                           <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center mt-0.5 ${
-                            model === m.id ? "border-violet-500 bg-violet-500" : "border-muted-foreground/40"
+                            tempModel === m.id ? "border-violet-500 bg-violet-500" : "border-muted-foreground/40"
                           }`}>
-                            {model === m.id && <div className="w-1 h-1 rounded-full bg-white" />}
+                            {tempModel === m.id && <div className="w-1 h-1 rounded-full bg-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-0.5">
