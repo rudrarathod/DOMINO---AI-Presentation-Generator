@@ -255,6 +255,33 @@ export default function BuilderScreen() {
     pushHistory(newSlides, description);
   };
 
+  const handleAiError = (err: any, actionName: string) => {
+    console.error(`${actionName} failed:`, err);
+    const msg = err?.message || "";
+    
+    if (msg.includes("Free generation limit") || msg.includes("limit (5)") || msg.includes("credits")) {
+      toast.error("You have run out of free generation credits. Please add your own API Key to continue.");
+      setApiKeyModalOpen(true);
+    } else if (msg.includes("No Groq API Key") || msg.includes("No API Key")) {
+      toast.error("An API Key is required. Please set it in the Settings panel.");
+      setApiKeyModalOpen(true);
+    } else if (
+      msg.toLowerCase().includes("invalid api key") || 
+      msg.toLowerCase().includes("api_key_invalid") || 
+      msg.toLowerCase().includes("unauthorized") || 
+      msg.includes("401")
+    ) {
+      toast.error("Invalid Groq API key. Please configure a valid key in Settings.");
+      setApiKeyModalOpen(true);
+    } else if (msg.toLowerCase().includes("rate limit") || msg.includes("429")) {
+      toast.error("Rate limit exceeded. Please wait a moment and try again.");
+    } else if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+      toast.error("Network error. Please check your internet connection and try again.");
+    } else {
+      toast.error(`${actionName} failed: ${msg || "An unexpected error occurred."}`);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [progressMsg, setProgressMsg] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -319,8 +346,10 @@ export default function BuilderScreen() {
         setHistoryIndex(0);
         toast.success("Presentation generated successfully!");
       } catch (err: any) {
-        console.error(err);
-        toast.error(`Generation failed: ${err.message}`);
+        handleAiError(err, "Generation");
+        if (isMounted) {
+          navigate("/");
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -373,7 +402,7 @@ export default function BuilderScreen() {
     localStorage.setItem("domino_presentations", JSON.stringify(decks));
   }, [presentationId, slides, deckTitle, aspectRatio, loading]);
 
-  // Keyboard shortcuts for Undo/Redo
+  // Keyboard shortcuts for Undo/Redo & Arrow key navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -383,6 +412,19 @@ export default function BuilderScreen() {
         target.isContentEditable
       ) {
         return;
+      }
+
+      // Slide navigation via arrow keys
+      if (!previewOpen) {
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedSlide((curr) => Math.min(slides.length - 1, curr + 1));
+          return;
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedSlide((curr) => Math.max(0, curr - 1));
+          return;
+        }
       }
 
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -403,7 +445,7 @@ export default function BuilderScreen() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [historyIndex, history]);
+  }, [historyIndex, history, slides.length, previewOpen]);
 
   const handleSendMessage = async () => {
     const input = chatInput.trim();
@@ -480,9 +522,8 @@ export default function BuilderScreen() {
 
       setMessages(prev => [...prev, { role: "ai" as const, text: response.explanation }]);
     } catch (err: any) {
-      console.error(err);
-      toast.error(`Refinement failed: ${err.message}`);
-      setMessages(prev => [...prev, { role: "ai" as const, text: `Sorry, I encountered an error while trying to update the slides: ${err.message}` }]);
+      handleAiError(err, "Refinement");
+      setMessages(prev => [...prev, { role: "ai" as const, text: `Sorry, I encountered an error while trying to update the slides: ${err?.message || "Unknown error"}` }]);
     } finally {
       setIsThinking(false);
     }
@@ -614,13 +655,7 @@ export default function BuilderScreen() {
           </div>
         </div>
 
-        {/* Center */}
-        <div className="flex items-center justify-center flex-1 hidden md:flex">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-emerald-400 font-medium">DOMINO AI Connected</span>
-          </div>
-        </div>
+
 
         {/* Right */}
         <div className="flex items-center gap-2 flex-1 justify-end">
@@ -754,7 +789,7 @@ export default function BuilderScreen() {
             {/* Slide canvas */}
             <div className={`relative w-full rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0d0d14] to-[#0a0a11] overflow-hidden shadow-2xl shadow-black/60 ${getAspectClass()}`}
             >
-              <ScaledSlide>
+              <ScaledSlide aspectRatio={aspectRatio}>
                 <SlideContent
                   slideIndex={selectedSlide}
                   slide={activeSlide}
@@ -823,49 +858,43 @@ export default function BuilderScreen() {
                   <span className="text-xs font-medium text-foreground">AI Assistant</span>
                 </div>
 
-                {/* Model Selector Dropdown */}
-                <div className="relative">
+                {/* Mode Selector Dropdown (Active Slide vs Whole Deck) */}
+                <div className="relative shrink-0 select-none">
                   <button
-                    onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border bg-muted/40 hover:bg-muted/80 text-[10px] text-muted-foreground hover:text-foreground transition-all"
+                    onClick={() => setScopeDropdownOpen(!scopeDropdownOpen)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-muted/40 border border-border text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80"
                   >
-                    <Cpu size={10} />
-                    <span className="max-w-[70px] truncate">
-                      {mList.find(m => m.id === model)?.name || "Llama 3.3"}
-                    </span>
-                    <ChevronDown size={8} />
+                    <span>{editScope === 'slide' ? 'Active Slide' : 'Whole Deck'}</span>
+                    <ChevronDown size={11} className={`transition-transform duration-200 ${scopeDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
-                  <AnimatePresence>
-                    {modelDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                        transition={{ duration: 0.14 }}
-                        className="absolute right-0 top-full mt-1.5 w-48 rounded-xl border border-border bg-[#1a1a1d] shadow-xl shadow-black/60 overflow-hidden z-30"
-                      >
-                        {mList.map((m) => (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              setModel(m.id);
-                              localStorage.setItem("lumina_model", m.id);
-                              setModelDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-[10px] text-left transition-colors ${
-                              model === m.id ? "text-violet-300 bg-violet-500/10 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            }`}
-                          >
-                            <div className="flex flex-col min-w-0">
-                              <span className="truncate">{m.name}</span>
-                              <span className="text-[8px] text-muted-foreground/60 font-mono mt-0.5">{m.speed} · {m.cost}</span>
-                            </div>
-                            {model === m.id && <Check size={10} className="text-violet-400 shrink-0" />}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  
+                  {scopeDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setScopeDropdownOpen(false)} />
+                      <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl border border-border bg-[#0e0e10]/95 backdrop-blur-md p-1 z-40 animate-in fade-in slide-in-from-top-2 duration-150 shadow-2xl">
+                        <button
+                          onClick={() => {
+                            setEditScope('slide');
+                            setScopeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between hover:bg-muted/60 ${editScope === 'slide' ? "text-violet-400 font-medium bg-violet-500/5" : "text-muted-foreground"}`}
+                        >
+                          <span>Active Slide</span>
+                          {editScope === 'slide' && <Check size={11} />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditScope('deck');
+                            setScopeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between hover:bg-muted/60 ${editScope === 'deck' ? "text-violet-400 font-medium bg-violet-500/5" : "text-muted-foreground"}`}
+                        >
+                          <span>Whole Deck</span>
+                          {editScope === 'deck' && <Check size={11} />}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -937,40 +966,42 @@ export default function BuilderScreen() {
                   {/* Chat input */}
                   <div className="p-3 border-t border-border">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/60 border border-border focus-within:border-primary/40 transition-all relative">
-                      {/* Scope Selector Dropdown inside input */}
+                      {/* Model Selector Dropdown inside input */}
                       <div className="relative shrink-0 select-none">
                         <button
-                          onClick={() => setScopeDropdownOpen(!scopeDropdownOpen)}
+                          onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium bg-background border border-border text-muted-foreground hover:text-foreground transition-all hover:bg-muted/80"
                         >
-                          <span>{editScope === 'slide' ? 'Active Slide' : 'Whole Deck'}</span>
-                          <ChevronDown size={11} className={`transition-transform duration-200 ${scopeDropdownOpen ? "rotate-180" : ""}`} />
+                          <Cpu size={10} />
+                          <span className="max-w-[70px] truncate">
+                            {mList.find(m => m.id === model)?.name || "Llama 3.3"}
+                          </span>
+                          <ChevronDown size={11} className={`transition-transform duration-200 ${modelDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         
-                        {scopeDropdownOpen && (
+                        {modelDropdownOpen && (
                           <>
-                            <div className="fixed inset-0 z-30" onClick={() => setScopeDropdownOpen(false)} />
-                            <div className="absolute bottom-full left-0 mb-2 w-36 rounded-xl border border-border bg-[#0e0e10]/95 backdrop-blur-md shadow-2xl p-1 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                              <button
-                                onClick={() => {
-                                  setEditScope('slide');
-                                  setScopeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between hover:bg-muted/60 ${editScope === 'slide' ? "text-violet-400 font-medium bg-violet-500/5" : "text-muted-foreground"}`}
-                              >
-                                <span>Active Slide</span>
-                                {editScope === 'slide' && <Check size={11} />}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditScope('deck');
-                                  setScopeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between hover:bg-muted/60 ${editScope === 'deck' ? "text-violet-400 font-medium bg-violet-500/5" : "text-muted-foreground"}`}
-                              >
-                                <span>Whole Deck</span>
-                                {editScope === 'deck' && <Check size={11} />}
-                              </button>
+                            <div className="fixed inset-0 z-30" onClick={() => setModelDropdownOpen(false)} />
+                            <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-border bg-[#0e0e10]/95 backdrop-blur-md p-1 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150 shadow-2xl">
+                              {mList.map((m) => (
+                                <button
+                                  key={m.id}
+                                  onClick={() => {
+                                    setModel(m.id);
+                                    localStorage.setItem("lumina_model", m.id);
+                                    setModelDropdownOpen(false);
+                                  }}
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] text-left transition-colors ${
+                                    model === m.id ? "text-violet-300 bg-violet-500/10 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                  }`}
+                                >
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="truncate">{m.name}</span>
+                                    <span className="text-[8px] text-muted-foreground/60 font-mono mt-0.5">{m.speed} · {m.cost}</span>
+                                  </div>
+                                  {model === m.id && <Check size={10} className="text-violet-400 shrink-0" />}
+                                </button>
+                              ))}
                             </div>
                           </>
                         )}
@@ -1011,6 +1042,7 @@ export default function BuilderScreen() {
           <PreviewModal
             slides={slides}
             initialSlide={selectedSlide}
+            aspectRatio={aspectRatio}
             onClose={() => setPreviewOpen(false)}
           />
         )}
@@ -1031,10 +1063,12 @@ export default function BuilderScreen() {
 function PreviewModal({
   slides,
   initialSlide,
+  aspectRatio,
   onClose,
 }: {
   slides: Slide[];
   initialSlide: number;
+  aspectRatio: string;
   onClose: () => void;
 }) {
   const [current, setCurrent] = useState(initialSlide);
@@ -1150,7 +1184,7 @@ function PreviewModal({
               transition={{ duration: 0.25, ease: "easeInOut" }}
               className="absolute inset-0"
             >
-              <ScaledSlide>
+              <ScaledSlide aspectRatio={aspectRatio}>
                 <SlideContent slideIndex={current} slide={slides[current]} />
               </ScaledSlide>
             </motion.div>
@@ -1188,7 +1222,7 @@ function PreviewModal({
                   relative flex-shrink-0 w-16 rounded-lg overflow-hidden border transition-all duration-200
                   ${i === current ? "border-violet-500/60 shadow-md shadow-violet-500/20 scale-110" : "border-white/[0.06] hover:border-white/20 opacity-60 hover:opacity-90"}
                 `}
-                style={{ aspectRatio: "16/9" }}
+                style={{ aspectRatio: aspectRatio === "4:3" ? "4/3" : aspectRatio === "1:1" ? "1/1" : "16/9" }}
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${slide.color} opacity-30`} />
                 <div className="absolute inset-0 bg-[#0d0d14]/70" />
@@ -1215,34 +1249,45 @@ function PreviewModal({
   );
 }
 
-const DESIGN_W = 1600;
-const DESIGN_H = 900;
-
-function ScaledSlide({ children }: { children: React.ReactNode }) {
+function ScaledSlide({ children, aspectRatio = "16:9" }: { children: React.ReactNode; aspectRatio?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+
+  let designW = 1600;
+  let designH = 900;
+
+  if (aspectRatio === "4:3") {
+    designW = 1200;
+    designH = 900;
+  } else if (aspectRatio === "1:1") {
+    designW = 900;
+    designH = 900;
+  }
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      setScale(entry.contentRect.width / DESIGN_W);
+      const { width, height } = entry.contentRect;
+      const scaleX = width / designW;
+      const scaleY = height / designH;
+      // Fit scale: choose minimum of width and height scales to fit the entire slide
+      setScale(Math.min(scaleX, scaleY));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [designW, designH]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden flex items-center justify-center bg-transparent">
       <div
         style={{
-          width: DESIGN_W,
-          height: DESIGN_H,
+          width: designW,
+          height: designH,
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          position: "absolute",
-          top: 0,
-          left: 0,
+          transformOrigin: "center center",
+          flexShrink: 0,
+          position: "relative",
         }}
       >
         {children}
