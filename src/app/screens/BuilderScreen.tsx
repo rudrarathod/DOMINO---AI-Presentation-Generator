@@ -50,7 +50,7 @@ interface HistoryEntry {
   timestamp: string;
 }
 
-import { isLimitReached, incrementGenerationsUsed, hasCustomApiKey } from "../services/usage";
+import { isLimitReached, deductCredits, hasCustomApiKey } from "../services/usage";
 import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import { DEFAULT_SLIDES as SEED_SLIDES } from "../services/defaultDeck";
 
@@ -231,9 +231,11 @@ export default function BuilderScreen() {
         const outline = await generateOutline(initialPrompt, slideCountParam);
         if (!isMounted) return;
 
-        // Increment free generation usage if they don't have their own API key
+        // Deduct credits based on generated slide count
         if (!hasCustomApiKey()) {
-          incrementGenerationsUsed();
+          const slideCount = outline.slides.length;
+          await deductCredits(slideCount);
+          toast.info(`Deducted ${slideCount} slide credits.`);
         }
 
         setDeckTitle(outline.presentationTitle);
@@ -380,6 +382,11 @@ export default function BuilderScreen() {
 
     try {
       const response = await refineSlides(newMessages, slides, selectedSlide, editScope);
+      
+      // Deduct 1 credit for chat refinement if using system key
+      if (!hasCustomApiKey()) {
+        await deductCredits(1);
+      }
       
       // Apply modifications
       if (response.modifications && response.modifications.length > 0) {

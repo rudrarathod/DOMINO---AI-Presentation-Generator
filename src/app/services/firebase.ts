@@ -32,7 +32,7 @@ export function isFirebaseEnabled(): boolean {
   return !!db;
 }
 
-export async function syncFromFirebase(email: string): Promise<{ apiKey?: string; generationsUsed?: number } | null> {
+export async function syncFromFirebase(email: string): Promise<{ apiKey?: string; credits?: number } | null> {
   if (!db || !email) return null;
   try {
     const userDocRef = doc(db, "users", email);
@@ -41,7 +41,7 @@ export async function syncFromFirebase(email: string): Promise<{ apiKey?: string
       const data = docSnap.data();
       return {
         apiKey: data.apiKey,
-        generationsUsed: data.generationsUsed,
+        credits: data.credits,
       };
     }
   } catch (error) {
@@ -50,7 +50,7 @@ export async function syncFromFirebase(email: string): Promise<{ apiKey?: string
   return null;
 }
 
-export async function syncToFirebase(email: string, data: { apiKey?: string; generationsUsed?: number }): Promise<void> {
+export async function syncToFirebase(email: string, data: { apiKey?: string; credits?: number }): Promise<void> {
   if (!db || !email) return;
   try {
     const userDocRef = doc(db, "users", email);

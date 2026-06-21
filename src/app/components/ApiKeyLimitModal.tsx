@@ -79,9 +79,9 @@ export default function ApiKeyLimitModal({ onClose, onSuccess }: ApiKeyLimitModa
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/25 flex items-center justify-center mb-4">
             <AlertCircle className="text-amber-400" size={24} />
           </div>
-          <h2 className="text-xl font-bold text-foreground">Free Limit Reached</h2>
+          <h2 className="text-xl font-bold text-foreground">Out of Credits</h2>
           <p className="text-xs text-muted-foreground mt-2 max-w-[320px] leading-relaxed">
-            You've used all 5 of your free generations. To continue creating and refining pitch decks, please add your own Groq API Key.
+            You've used all 50 of your free slide credits. To continue creating and refining pitch decks, please add your own Groq API Key.
           </p>
         </div>
 

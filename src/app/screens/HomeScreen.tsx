@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getApiKey, Slide } from "../services/ai";
 import { getUser, setUser as setSavedUser } from "../services/auth";
-import { isLimitReached, getRemainingGenerations, getGenerationsUsed, hasCustomApiKey, saveCustomApiKey } from "../services/usage";
+import { isLimitReached, getCreditsRemaining, hasEnoughCredits, deductCredits, hasCustomApiKey, saveCustomApiKey } from "../services/usage";
 import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import {
   Search,
@@ -154,7 +154,9 @@ export default function HomeScreen() {
     const finalPrompt = (customPrompt || prompt).trim();
     if (!finalPrompt) return;
 
-    if (isLimitReached()) {
+    const requiredCredits = slideCount === "Auto" ? 10 : parseInt(slideCount, 10);
+    if (!hasEnoughCredits(requiredCredits)) {
+      toast.error(`Insufficient credits. You need ${requiredCredits} credits to generate this presentation, but only have ${getCreditsRemaining()} left.`);
       setApiKeyModalOpen(true);
       return;
     }
@@ -287,27 +289,27 @@ export default function HomeScreen() {
           </nav>
         </div>
 
-        {/* Free Generation Usage Progress in Sidebar */}
+        {/* Slide Credits Progress in Sidebar */}
         <div className="px-4 py-3 border-t border-border bg-white/[0.01]">
           {(() => {
             const customKey = hasCustomApiKey();
-            const used = getGenerationsUsed();
-            const pct = Math.min(100, (used / 5) * 100);
+            const credits = getCreditsRemaining();
+            const pct = Math.min(100, (credits / 50) * 100);
             return (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-muted-foreground font-medium">AI Generation Usage</span>
-                  <span className={`font-mono font-semibold ${customKey ? "text-emerald-400" : used >= 5 ? "text-rose-400 animate-pulse" : "text-violet-300"}`}>
-                    {customKey ? "Unlimited" : `${used} / 5`}
+                  <span className="text-muted-foreground font-medium">Slide Credits</span>
+                  <span className={`font-mono font-semibold ${customKey ? "text-emerald-400" : credits <= 0 ? "text-rose-400 animate-pulse" : "text-violet-300"}`}>
+                    {customKey ? "Unlimited" : `${credits} / 50`}
                   </span>
                 </div>
                 {!customKey && (
                   <div className="h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.02]">
                     <div 
                       className={`h-full rounded-full transition-all duration-500 ease-out ${
-                        used >= 5 
+                        credits <= 0 
                           ? "bg-rose-500" 
-                          : used >= 4 
+                          : credits <= 15 
                             ? "bg-amber-500" 
                             : "bg-gradient-to-r from-violet-500 to-indigo-500"
                       }`}
@@ -315,7 +317,7 @@ export default function HomeScreen() {
                     />
                   </div>
                 )}
-                {used >= 5 && !customKey && (
+                {credits <= 0 && !customKey && (
                   <button 
                     onClick={() => setApiKeyModalOpen(true)}
                     className="w-full text-center text-[10px] text-violet-400 hover:text-violet-300 transition-colors font-medium mt-1 block"
@@ -390,14 +392,13 @@ export default function HomeScreen() {
           <motion.div variants={itemVariants} className="text-center mb-8">
             {(() => {
               const customKey = hasCustomApiKey();
-              const remaining = getRemainingGenerations();
-              const used = getGenerationsUsed();
+              const credits = getCreditsRemaining();
               return (
                 <div 
                   className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium mb-5 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all ${
                     customKey 
                       ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                      : remaining === 0 
+                      : credits <= 0 
                         ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
                         : "bg-violet-500/10 border-violet-500/20 text-violet-400"
                   }`}
@@ -406,9 +407,9 @@ export default function HomeScreen() {
                 >
                   <Sparkles size={12} />
                   {customKey ? (
-                    "Unlimited Generations (Your API Key)"
+                    "Unlimited Credits (Your API Key)"
                   ) : (
-                    `${remaining} of 5 Free Generations Left`
+                    `${credits} Slide Credits Left`
                   )}
                 </div>
               );
