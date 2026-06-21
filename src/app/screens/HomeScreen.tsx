@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getApiKey, Slide } from "../services/ai";
+import { getUser, setUser as setSavedUser } from "../services/auth";
 import {
   Search,
   Plus,
@@ -270,19 +271,28 @@ export default function HomeScreen() {
 
         {/* User profile */}
         <div className="px-3 py-3 border-t border-border">
-          <div
-            className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/60 cursor-pointer transition-colors group"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0">
-              <span className="text-xs font-semibold text-white">AK</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Alex Kim</p>
-              <p className="text-xs text-muted-foreground truncate">alex@domino.app</p>
-            </div>
-            <Settings size={14} className="text-muted-foreground/60 group-hover:text-muted-foreground transition-colors shrink-0" />
-          </div>
+          {(() => {
+            const user = getUser() || { name: "Dev User", email: "dev@domino.app", initials: "DU", picture: undefined };
+            return (
+              <div
+                className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/60 cursor-pointer transition-colors group"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 overflow-hidden shadow">
+                  {user.picture ? (
+                    <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-semibold text-white">{user.initials}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+                <Settings size={14} className="text-muted-foreground/60 group-hover:text-muted-foreground transition-colors shrink-0" />
+              </div>
+            );
+          })()}
         </div>
       </aside>
 
@@ -568,23 +578,38 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
               {tab === "account" && (
                 <div className="space-y-4">
                   {/* User card */}
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/30 border border-border">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-violet-500/20">
-                      <span className="text-sm font-bold text-white">AK</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">Alex Kim</p>
-                      <p className="text-xs text-muted-foreground">alex@lumina.ai</p>
-                    </div>
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-medium shrink-0">
-                      Pro
-                    </span>
-                  </div>
+                  {(() => {
+                    const user = getUser() || { name: "Dev User", email: "dev@domino.app", initials: "DU", picture: undefined };
+                    return (
+                      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/30 border border-border">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-violet-500/20 overflow-hidden">
+                          {user.picture ? (
+                            <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-bold text-white">{user.initials}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">{user.name}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 font-medium shrink-0">
+                          Pro
+                        </span>
+                      </div>
+                    );
+                  })()}
 
 
                   {/* Sign out */}
                   <div className="pt-1">
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 text-sm font-medium transition-all">
+                    <button
+                      onClick={() => {
+                        setSavedUser(null);
+                        window.location.reload();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 text-sm font-medium transition-all"
+                    >
                       <LogOut size={14} />
                       Sign out of all devices
                     </button>
