@@ -25,6 +25,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   envPrefix: ['VITE_', 'AI_'],
+  server: {
+    port: 5000,
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory

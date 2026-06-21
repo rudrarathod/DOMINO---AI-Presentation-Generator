@@ -50,6 +50,8 @@ interface HistoryEntry {
   timestamp: string;
 }
 
+import { isLimitReached, incrementGenerationsUsed, hasCustomApiKey } from "../services/usage";
+import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import { DEFAULT_SLIDES as SEED_SLIDES } from "../services/defaultDeck";
 
 const DEFAULT_SLIDES = SEED_SLIDES.map((s, idx) => ({
@@ -116,6 +118,7 @@ export default function BuilderScreen() {
 
   const [selectedSlide, setSelectedSlide] = useState(0);
   const [chatInput, setChatInput] = useState("");
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
     { role: "ai", text: "I'm your DOMINO design assistant. You can ask me to modify the content, style, or add/delete slides in real-time." }
   ]);
@@ -227,6 +230,11 @@ export default function BuilderScreen() {
       try {
         const outline = await generateOutline(initialPrompt, slideCountParam);
         if (!isMounted) return;
+
+        // Increment free generation usage if they don't have their own API key
+        if (!hasCustomApiKey()) {
+          incrementGenerationsUsed();
+        }
 
         setDeckTitle(outline.presentationTitle);
         setProgressMsg(`Outline created! Generating ${outline.slides.length} slides in parallel...`);
@@ -359,6 +367,11 @@ export default function BuilderScreen() {
   const handleSendMessage = async () => {
     const input = chatInput.trim();
     if (!input) return;
+
+    if (isLimitReached()) {
+      setApiKeyModalOpen(true);
+      return;
+    }
 
     setChatInput("");
     const newMessages = [...messages, { role: "user" as const, text: input }];
@@ -900,6 +913,15 @@ export default function BuilderScreen() {
             slides={slides}
             initialSlide={selectedSlide}
             onClose={() => setPreviewOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* API Key Limit Modal */}
+      <AnimatePresence>
+        {apiKeyModalOpen && (
+          <ApiKeyLimitModal
+            onClose={() => setApiKeyModalOpen(false)}
           />
         )}
       </AnimatePresence>

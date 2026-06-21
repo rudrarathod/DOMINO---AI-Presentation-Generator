@@ -1,3 +1,5 @@
+import { isLimitReached } from "./usage";
+
 export interface SlideOutline {
   type: 'cover' | 'problem' | 'solution' | 'market' | 'product' | 'business_model' | 'competition' | 'financials' | 'roadmap' | 'team' | 'generic';
   title: string;
@@ -33,6 +35,10 @@ export function getModel(): string {
 }
 
 async function callGroq(messages: { role: string; content: string }[], responseFormatJson: boolean = true) {
+  if (isLimitReached()) {
+    throw new Error("Free generation limit (5) reached. Please configure your own Groq API key to continue.");
+  }
+
   const apiKey = getApiKey();
   const model = getModel();
 

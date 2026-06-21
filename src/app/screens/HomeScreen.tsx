@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getApiKey, Slide } from "../services/ai";
 import { getUser, setUser as setSavedUser } from "../services/auth";
+import { isLimitReached, getRemainingGenerations, getGenerationsUsed, hasCustomApiKey } from "../services/usage";
+import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import {
   Search,
   Plus,
@@ -135,11 +137,17 @@ export default function HomeScreen() {
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [slidePickerOpen, setSlidePickerOpen] = useState(false);
   const [ratioPickerOpen, setRatioPickerOpen] = useState(false);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerate = (customPrompt?: string) => {
     const finalPrompt = (customPrompt || prompt).trim();
     if (!finalPrompt) return;
+
+    if (isLimitReached()) {
+      setApiKeyModalOpen(true);
+      return;
+    }
 
     const key = getApiKey();
     if (!key) {
@@ -269,6 +277,47 @@ export default function HomeScreen() {
           </nav>
         </div>
 
+        {/* Free Generation Usage Progress in Sidebar */}
+        <div className="px-4 py-3 border-t border-border bg-white/[0.01]">
+          {(() => {
+            const customKey = hasCustomApiKey();
+            const used = getGenerationsUsed();
+            const pct = Math.min(100, (used / 5) * 100);
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground font-medium">AI Generation Usage</span>
+                  <span className={`font-mono font-semibold ${customKey ? "text-emerald-400" : used >= 5 ? "text-rose-400 animate-pulse" : "text-violet-300"}`}>
+                    {customKey ? "Unlimited" : `${used} / 5`}
+                  </span>
+                </div>
+                {!customKey && (
+                  <div className="h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.02]">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${
+                        used >= 5 
+                          ? "bg-rose-500" 
+                          : used >= 4 
+                            ? "bg-amber-500" 
+                            : "bg-gradient-to-r from-violet-500 to-indigo-500"
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                )}
+                {used >= 5 && !customKey && (
+                  <button 
+                    onClick={() => setApiKeyModalOpen(true)}
+                    className="w-full text-center text-[10px] text-violet-400 hover:text-violet-300 transition-colors font-medium mt-1 block"
+                  >
+                    Enter API Key to unlock ↗
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
         {/* User profile */}
         <div className="px-3 py-3 border-t border-border">
           {(() => {
@@ -329,10 +378,31 @@ export default function HomeScreen() {
         >
           {/* Heading */}
           <motion.div variants={itemVariants} className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-medium mb-5">
-              <Sparkles size={12} />
-              AI-Powered Presentations
-            </div>
+            {(() => {
+              const customKey = hasCustomApiKey();
+              const remaining = getRemainingGenerations();
+              const used = getGenerationsUsed();
+              return (
+                <div 
+                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium mb-5 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all ${
+                    customKey 
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                      : remaining === 0 
+                        ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                        : "bg-violet-500/10 border-violet-500/20 text-violet-400"
+                  }`}
+                  onClick={() => customKey ? setSettingsOpen(true) : setApiKeyModalOpen(true)}
+                  title={customKey ? "You are using your own API Key" : "Click to enter custom API key"}
+                >
+                  <Sparkles size={12} />
+                  {customKey ? (
+                    "Unlimited Generations (Your API Key)"
+                  ) : (
+                    `${remaining} of 5 Free Generations Left`
+                  )}
+                </div>
+              );
+            })()}
             <h1 className="text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1] mb-4">
               Create Beautiful
               <br />
@@ -482,6 +552,15 @@ export default function HomeScreen() {
       {/* Settings modal */}
       <AnimatePresence>
         {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      </AnimatePresence>
+
+      {/* API Key Limit Modal */}
+      <AnimatePresence>
+        {apiKeyModalOpen && (
+          <ApiKeyLimitModal
+            onClose={() => setApiKeyModalOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
