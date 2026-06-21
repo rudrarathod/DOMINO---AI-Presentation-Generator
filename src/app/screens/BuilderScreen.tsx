@@ -50,7 +50,7 @@ interface HistoryEntry {
   timestamp: string;
 }
 
-import { isLimitReached, deductCredits, hasCustomApiKey } from "../services/usage";
+import { isLimitReached, deductCredits, hasCustomApiKey, getCreditsRemaining } from "../services/usage";
 import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import { DEFAULT_SLIDES as SEED_SLIDES } from "../services/defaultDeck";
 
@@ -964,7 +964,25 @@ export default function BuilderScreen() {
                   </div>
 
                   {/* Chat input */}
-                  <div className="p-3 border-t border-border">
+                  <div className="p-3 border-t border-border flex flex-col gap-2">
+                    {/* Credits Display */}
+                    <div className="flex items-center justify-between px-1 text-[10px] text-muted-foreground select-none">
+                      <div className="flex items-center gap-1">
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          hasCustomApiKey() ? "bg-emerald-400" :
+                          getCreditsRemaining() <= 0 ? "bg-rose-500 animate-pulse" :
+                          getCreditsRemaining() <= 15 ? "bg-amber-500" : "bg-violet-400"
+                        }`} />
+                        <span>Credits Remaining</span>
+                      </div>
+                      <span className={`font-mono font-medium ${
+                        hasCustomApiKey() ? "text-emerald-400" :
+                        getCreditsRemaining() <= 0 ? "text-rose-400 font-semibold" : "text-foreground/80"
+                      }`}>
+                        {hasCustomApiKey() ? "Unlimited (Custom Key)" : `${getCreditsRemaining()} / 50`}
+                      </span>
+                    </div>
+
                     <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/60 border border-border focus-within:border-primary/40 transition-all relative">
                       {/* Model Selector Dropdown inside input */}
                       <div className="relative shrink-0 select-none">
