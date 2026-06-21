@@ -59,6 +59,14 @@ const DEFAULT_SLIDES = SEED_SLIDES.map((s, idx) => ({
   ...s
 }));
 
+const mList = [
+  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", speed: "280 T/s", cost: "High" },
+  { id: "meta-llama/llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout", speed: "750 T/s", cost: "Low-Mid" },
+  { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B", speed: "500 T/s", cost: "High" },
+  { id: "qwen/qwen3-32b", name: "Qwen 3 32B", speed: "400 T/s", cost: "Medium" },
+  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", speed: "560 T/s", cost: "Low" },
+];
+
 function getMockTypeFromIndex(index: number): Slide['type'] {
   return DEFAULT_SLIDES[index]?.type || 'generic';
 }
@@ -119,6 +127,37 @@ export default function BuilderScreen() {
   const [selectedSlide, setSelectedSlide] = useState(0);
   const [chatInput, setChatInput] = useState("");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [rightWidth, setRightWidth] = useState(340);
+  const [model, setModel] = useState(() => localStorage.getItem("lumina_model") || "llama-3.3-70b-versatile");
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const isResizingRef = useRef(false);
+
+  const startResizing = (mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    isResizingRef.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const newWidth = window.innerWidth - mouseMoveEvent.clientX;
+      if (newWidth >= 280 && newWidth <= 600) {
+        setRightWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizingRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
     { role: "ai", text: "I'm your DOMINO design assistant. You can ask me to modify the content, style, or add/delete slides in real-time." }
   ]);
@@ -764,17 +803,70 @@ export default function BuilderScreen() {
           {rightOpen && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 340, opacity: 1 }}
+              animate={{ width: rightWidth, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="hidden lg:flex flex-col border-l border-border bg-[#0e0e10] shrink-0 overflow-hidden"
+              className="hidden lg:flex flex-col border-l border-border bg-[#0e0e10] shrink-0 overflow-hidden relative"
+              style={{ width: rightWidth }}
             >
+              {/* Resizer Handle */}
+              <div
+                onMouseDown={startResizing}
+                className="absolute top-0 bottom-0 left-0 w-1 cursor-col-resize hover:bg-violet-500/30 hover:w-1.5 active:bg-violet-500 active:w-1.5 transition-all z-20"
+              />
               {/* Header */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
-                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-                  <Bot size={11} className="text-white" />
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+                    <Bot size={11} className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-foreground">AI Assistant</span>
                 </div>
-                <span className="text-xs font-medium text-foreground">AI Assistant</span>
+
+                {/* Model Selector Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border bg-muted/40 hover:bg-muted/80 text-[10px] text-muted-foreground hover:text-foreground transition-all"
+                  >
+                    <Cpu size={10} />
+                    <span className="max-w-[70px] truncate">
+                      {mList.find(m => m.id === model)?.name || "Llama 3.3"}
+                    </span>
+                    <ChevronDown size={8} />
+                  </button>
+                  <AnimatePresence>
+                    {modelDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                        transition={{ duration: 0.14 }}
+                        className="absolute right-0 top-full mt-1.5 w-48 rounded-xl border border-border bg-[#1a1a1d] shadow-xl shadow-black/60 overflow-hidden z-30"
+                      >
+                        {mList.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => {
+                              setModel(m.id);
+                              localStorage.setItem("lumina_model", m.id);
+                              setModelDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-[10px] text-left transition-colors ${
+                              model === m.id ? "text-violet-300 bg-violet-500/10 font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex flex-col min-w-0">
+                              <span className="truncate">{m.name}</span>
+                              <span className="text-[8px] text-muted-foreground/60 font-mono mt-0.5">{m.speed} · {m.cost}</span>
+                            </div>
+                            {model === m.id && <Check size={10} className="text-violet-400 shrink-0" />}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
 
