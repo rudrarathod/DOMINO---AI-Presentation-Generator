@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Cpu, Key, Eye, EyeOff, X, ExternalLink, AlertCircle, Check } from "lucide-react";
+import { saveCustomApiKey } from "../services/usage";
 
 interface ApiKeyLimitModalProps {
   onClose: () => void;
@@ -28,13 +29,18 @@ export default function ApiKeyLimitModal({ onClose, onSuccess }: ApiKeyLimitModa
     }
 
     setIsSaving(true);
-    setTimeout(() => {
-      localStorage.setItem("lumina_api_key", cleanKey);
-      toast.success("Groq API Key configured successfully!");
-      setIsSaving(false);
-      if (onSuccess) onSuccess();
-      onClose();
-    }, 600);
+    saveCustomApiKey(cleanKey)
+      .then(() => {
+        toast.success("Groq API Key configured successfully!");
+        setIsSaving(false);
+        if (onSuccess) onSuccess();
+        onClose();
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Failed to save API key.");
+        setIsSaving(false);
+      });
   };
 
   return (

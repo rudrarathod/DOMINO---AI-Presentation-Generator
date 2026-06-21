@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getApiKey, Slide } from "../services/ai";
 import { getUser, setUser as setSavedUser } from "../services/auth";
-import { isLimitReached, getRemainingGenerations, getGenerationsUsed, hasCustomApiKey } from "../services/usage";
+import { isLimitReached, getRemainingGenerations, getGenerationsUsed, hasCustomApiKey, saveCustomApiKey } from "../services/usage";
 import ApiKeyLimitModal from "../components/ApiKeyLimitModal";
 import {
   Search,
@@ -576,7 +576,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    localStorage.setItem("lumina_api_key", apiKey);
+    saveCustomApiKey(apiKey).catch(e => console.error("Failed to sync API key:", e));
     localStorage.setItem("lumina_model", model);
     setSaved(true);
     toast.success("Settings saved!");
